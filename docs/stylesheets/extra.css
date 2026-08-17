@@ -1,0 +1,27 @@
+/* 目次を画面右端へ寄せ、本文は中央の固定幅に収める */
+.md-grid {
+  max-width: 100%;
+}
+
+.md-content {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+/* 本文をひと回り小さく、行間を広めに */
+.md-typeset {
+  font-size: 0.75rem; /* 15px */
+  line-height: 1.8;
+}
+
+.md-typeset h1 {
+  font-size: 1.7em;
+}
+
+.md-typeset h2 {
+  font-size: 1.4em;
+}
+
+.md-typeset h3 {
+  font-size: 1.15em;
+}

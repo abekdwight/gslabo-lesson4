@@ -1,0 +1,46 @@
+site_name: EXP Laravel②
+site_url: https://abekdwight.github.io/gslabo-lesson4/
+
+theme:
+  name: material
+  language: ja
+  font: false
+  palette:
+    scheme: default
+  features:
+    - content.code.copy
+    - toc.follow
+
+plugins:
+  - search:
+      lang: ja
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - tables
+  - toc:
+      toc_depth: 2
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.inlinehilite
+  - pymdownx.highlight:
+      anchor_linenums: false
+      extend_pygments_lang:
+        - name: php
+          lang: php
+          options:
+            startinline: true
+        - name: blade
+          lang: html+php
+          options:
+            startinline: true
+
+extra_css:
+  - stylesheets/extra.css
+
+nav:
+  - "Laravel 2 — 家計簿を Laravel の流儀に乗せる": index.md
