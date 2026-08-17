@@ -41,6 +41,22 @@ cd kakeibo
 
 - **一覧に取引が2〜3件ある状態**で始めます。空の場合は「取引を追加」から何件か入れておいてください。
 
+??? note "前回のプロジェクトが手元に無い場合（クリックで開く）"
+
+    ①を欠席した場合や、プロジェクトが動かなくなった場合は、①完了時点のプロジェクトを取得して、そこから始められます。
+
+    ```sh
+    git clone https://github.com/abekdwight/gslabo-lesson4.git
+    cd gslabo-lesson4/kakeibo
+    docker run --rm -v "$(pwd)":/opt -w /opt laravelsail/php84-composer:latest composer install
+    cp .env.example .env
+    ./vendor/bin/sail up -d
+    ./vendor/bin/sail artisan key:generate
+    ./vendor/bin/sail artisan migrate --seed
+    ```
+
+    最後の `--seed` で、①で登録したのと同じカテゴリ10件と取引3件が入ります。初回は Docker イメージの取得と `composer install` に数分かかります。以降は、このフォルダを自分のプロジェクトとして使ってください。
+
 !!! success "確認"
 
     ブラウザで `http://localhost/transactions` を開いて、前回作った一覧が表示されれば準備完了です。
