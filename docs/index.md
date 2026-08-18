@@ -780,7 +780,24 @@ DELETE     transactions/{transaction} ........ transactions.destroy
 ./vendor/bin/sail artisan make:request TransactionRequest
 ```
 
-`app/Http/Requests/TransactionRequest.php` が生成されます。開くとメソッドが2つあり、**`authorize()` が `return false;` になっている**ことにまず注意してください。authorize は「このリクエストを送ることを許可するか」の判定場所で、false のままだと全部のリクエストが 403 で拒否されます。今日の家計簿は1人用なので true にします。`rules()` には、コントローラに書いていたルールをそのまま移します。生成時に付いている説明コメントは消して構いません。書き換えた全文です。
+`app/Http/Requests/TransactionRequest.php` が生成されます。開くとメソッドが2つあり、**`authorize()` が `return false;` になっている**ことにまず注意してください。authorize は「このリクエストを送ることを許可するか」の判定場所で、false のままだと全部のリクエストが 403 で拒否されます。
+
+送信からコントローラのメソッド本体までの流れの中で、FormRequest が動く位置は次のとおりです。どこかの層で弾かれると、メソッド本体には届きません。
+
+```mermaid
+flowchart TB
+    A["PUT /transactions/5（更新の送信）"] --> B["ミドルウェア（セッション開始・CSRF検証 など）"]
+    B -->|CSRF検証に失敗| RB["419 Page Expired"]
+    B --> C["ルートモデルバインディング（URL の ID で1件取得）"]
+    C -->|見つからない| RC["404 Not Found"]
+    C --> D["TransactionRequest の authorize()"]
+    D -->|false| RD["403 Forbidden"]
+    D --> E["TransactionRequest の rules() で検証"]
+    E -->|検証NG| RE["フォームへ差し戻し（エラーと入力値はセッションで運ぶ）"]
+    E -->|検証OK| F["update() の本体が実行される"]
+```
+
+今日の家計簿は1人用なので true にします。`rules()` には、コントローラに書いていたルールをそのまま移します。生成時に付いている説明コメントは消して構いません。書き換えた全文です。
 
 ```php
 <?php
@@ -926,22 +943,6 @@ class TransactionRequest extends FormRequest
     ```
 
 `$request->validate([...])` の行が消えて、短くなりました。前回から `store(Request $request)` と書いてきました。その `Request` の場所に自作の `TransactionRequest` を置くと、Laravel は**コントローラのメソッドが始まる前に** `rules()` の検証を実行します。メソッドに到達した時点で検証は済んでいて、通った値だけを `validated()` で受け取ります。検証に失敗したときの動き（エラーと入力値を持ってフォームへ差し戻す）は、いままでと同じです。[フォームリクエスト](https://readouble.com/laravel/13.x/ja/validation.html#form-request-validation)
-
-```mermaid
-sequenceDiagram
-    participant ブラウザ
-    participant ルート as routes/web.php
-    participant リクエスト as TransactionRequest
-    participant コントローラ as TransactionController
-    ブラウザ->>ルート: POST /transactions
-    ルート->>リクエスト: コントローラを呼ぶ前に rules() で検証
-    alt 検証OK
-        リクエスト->>コントローラ: store() が validated() を受け取れる
-        コントローラ->>ブラウザ: 一覧へリダイレクト
-    else 検証NG
-        リクエスト->>ブラウザ: フォームへ差し戻し（エラーと入力値はセッションで運ぶ）
-    end
-```
 
 !!! success "確認"
 
