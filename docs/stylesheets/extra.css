@@ -25,3 +25,10 @@
 .md-typeset h3 {
   font-size: 1.15em;
 }
+
+/* コンテンツタブ（追加する部分／全文）の領域を枠で囲む */
+.md-typeset .tabbed-set {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.2rem 16px 12px;
+}
