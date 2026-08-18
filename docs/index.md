@@ -782,19 +782,13 @@ DELETE     transactions/{transaction} ........ transactions.destroy
 
 `app/Http/Requests/TransactionRequest.php` が生成されます。開くとメソッドが2つあり、**`authorize()` が `return false;` になっている**ことにまず注意してください。authorize は「このリクエストを送ることを許可するか」の判定場所で、false のままだと全部のリクエストが 403 で拒否されます。
 
-送信からコントローラのメソッド本体までの流れの中で、FormRequest が動く位置は次のとおりです。どこかの層で弾かれると、メソッド本体には届きません。
+リクエストがコントローラのメソッド本体に届くまでには、次の層があります。FormRequest はこの位置で動き、どこかの層で弾かれるとメソッド本体には届きません。
 
 ```mermaid
 flowchart TB
-    A["PUT /transactions/5（更新の送信）"] --> B["ミドルウェア（セッション開始・CSRF検証 など）"]
-    B -->|CSRF検証に失敗| RB["419 Page Expired"]
-    B --> C["ルートモデルバインディング（URL の ID で1件取得）"]
-    C -->|見つからない| RC["404 Not Found"]
-    C --> D["TransactionRequest の authorize()"]
-    D -->|false| RD["403 Forbidden"]
-    D --> E["TransactionRequest の rules() で検証"]
-    E -->|検証NG| RE["フォームへ差し戻し（エラーと入力値はセッションで運ぶ）"]
-    E -->|検証OK| F["update() の本体が実行される"]
+    A["リクエスト"] --> B["ミドルウェア"]
+    B --> C["FormRequest（authorize() → rules()）"]
+    C --> D["コントローラのメソッド本体"]
 ```
 
 今日の家計簿は1人用なので true にします。`rules()` には、コントローラに書いていたルールをそのまま移します。生成時に付いている説明コメントは消して構いません。書き換えた全文です。
