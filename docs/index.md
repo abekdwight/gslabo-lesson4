@@ -109,6 +109,8 @@ DELETE     transactions/{transaction} ........ transactions.destroy
     | `{transaction:slug}` のように「パラメータ名:列名」で書く | ルート | そのルートだけ、指定した列で検索する |
     | `#[RouteKey('slug')]` をクラスに付ける | モデル | そのモデルは常に、指定した列で検索する |
 
+    `#[RouteKey(...)]` は、クラスに付ける PHP の属性という書き方です。
+
     ルートモデル結合では、ほかに次のような制御もできます。[ルートモデル結合](https://readouble.com/laravel/13.x/ja/routing.html#route-model-binding)
 
     - **スコープ付きバインディング**：`/users/5/posts/3` のような親子の URL で、子を「親に属するものだけ」に絞って検索する

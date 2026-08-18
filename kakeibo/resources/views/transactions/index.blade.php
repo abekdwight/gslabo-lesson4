@@ -17,6 +17,9 @@
                     <td>{{ $transaction->type === 'income' ? '収入' : '支出' }}</td>
                     <td class="amount">¥{{ number_format($transaction->amount) }}</td>
                     <td>{{ $transaction->note }}</td>
+                    <td>
+                        <a href="{{ route('transactions.edit', $transaction) }}">編集</a>
+                    </td>
                 </tr>
             @endforeach
         </tbody>
