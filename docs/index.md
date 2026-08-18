@@ -94,7 +94,7 @@ DELETE     transactions/{transaction} ........ transactions.destroy
 
 `{transaction}` の部分には、取引の ID が入ります。ID が 5 の取引なら、編集画面は `/transactions/5/edit`、更新は `/transactions/5` への PUT、削除は `/transactions/5` への DELETE です。
 
-コントローラ側では、メソッドの引数に `Transaction $transaction` と型を付けて宣言します。すると Laravel が、URL に入った ID で transactions テーブルを検索し、見つかった1件をモデルにして引数に渡してくれます。これが1つ目の新しい仕組み、**ルートモデルバインディング**です。`Transaction::find($id)` のような取得コードを自分で書く必要はなく、存在しない ID の URL を開いた場合は 404 ページが返ります。[ルートモデルバインディング](https://readouble.com/laravel/13.x/ja/routing.html#route-model-binding)
+コントローラ側では、メソッドの引数を `Transaction $transaction` と宣言します。**URL のセグメント名 `{transaction}` と引数の変数名 `$transaction` が同じ名前で、型が Eloquent モデルであるとき**、Laravel は URL に入った ID で transactions テーブルを検索し、見つかった1件をモデルにして引数に渡します。これが1つ目の新しい仕組み、**ルートモデルバインディング**です。`Transaction::find($id)` のような取得コードを自分で書く必要はなく、存在しない ID の URL を開いた場合は 404 ページが返ります。名前の一致が条件なので、引数名を `$item` のように変えると渡されなくなります。[ルートモデルバインディング](https://readouble.com/laravel/13.x/ja/routing.html#route-model-binding)
 
 !!! info "ポイント：「どの1件か」は URL の ID で指定する"
 
@@ -102,12 +102,22 @@ DELETE     transactions/{transaction} ........ transactions.destroy
 
 !!! note "補足：ID 以外の値で検索させることもできる"
 
-    `{transaction}` の検索に使われる列は、既定では ID です。これは変更できます。たとえば記事のようなモデルで、URL を `/articles/5` ではなく `/articles/my-first-article` にしたい場合は、次のどちらかで「slug 列で検索する」と指定します。
+    `{transaction}` の検索に使われる列は、既定では ID です。URL に ID 以外の値を使いたい場合（たとえば記事のようなモデルで `/articles/my-first-article` のような URL にしたい場合）、検索に使う列は次の2つの書き方で変えられます。指定する列には、一意な値が入っている必要があります。
 
     | 書き方 | 書く場所 | 効果 |
     | --- | --- | --- |
-    | `{article:slug}` とルートに書く | ルート | そのルートだけ slug 列で検索する |
-    | `getRouteKeyName()` で `'slug'` を返す | モデル | そのモデルは常に slug 列で検索する |
+    | `{transaction:slug}` のように「パラメータ名:列名」で書く | ルート | そのルートだけ、指定した列で検索する |
+    | `#[RouteKey('slug')]` をクラスに付ける | モデル | そのモデルは常に、指定した列で検索する |
+
+    `#[RouteKey(...)]` は、クラスに付ける PHP の属性という書き方です（スターターキットが生成した `app/Models/User.php` の `#[Fillable(...)]` と同じ形式）。
+
+    ルートモデル結合では、ほかに次のような制御もできます。[ルートモデル結合](https://readouble.com/laravel/13.x/ja/routing.html#route-model-binding)
+
+    - **スコープ付きバインディング**：`/users/5/posts/3` のような親子の URL で、子を「親に属するものだけ」に絞って検索する
+    - **`missing()`**：見つからなかったときの動作を、404 ではなく任意の処理（一覧へリダイレクトなど）に変える
+    - **`withTrashed()`**：ソフトデリート（レコードを消さずに削除済み扱いにする仕組み）のデータも検索対象に含める
+    - **Enum バインディング**：URL の値を enum（列挙型）として受け取り、定義に無い値なら 404 を返す
+    - **`Route::model()`**：どのパラメータ名をどのモデルで解決するかを、あらかじめ登録して指定する
 
     この家計簿は ID のまま進めます。
 
