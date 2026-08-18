@@ -962,36 +962,35 @@ class TransactionRequest extends FormRequest
 'required' => 'The :attribute field is required.',
 ```
 
-`:attribute` の部分には、項目名が差し込まれます。ということは、**同じ形の日本語ファイルを `ja` として置けば、文言を丸ごと差し替えられます**。`lang/ja/validation.php` を新規作成します。
+`:attribute` の部分には、項目名が差し込まれます。ということは、**同じ形の日本語ファイルを `ja` として置けば、文言を差し替えられます**。`lang/ja` フォルダを作り、`lang/en/validation.php` を丸ごとコピーします。
+
+```sh
+mkdir lang/ja
+cp lang/en/validation.php lang/ja/validation.php
+```
+
+中身はまだ全部英語です。ここから、必要になった行を日本語に置き換えていきます。まず `'required'` の行を置き換えます。
 
 ```php
-<?php
+'required' => ':attributeは必ず入力してください。',
+```
 
-return [
-    'required' => ':attributeは必ず入力してください。',
-    'date' => ':attributeは正しい日付の形式で入力してください。',
-    'in' => '選択された:attributeは正しくありません。',
-    'exists' => '選択された:attributeは正しくありません。',
-    'integer' => ':attributeは整数で入力してください。',
-    'string' => ':attributeは文字列で入力してください。',
-    'min' => [
-        'numeric' => ':attributeには:min以上の数を指定してください。',
-    ],
-    'max' => [
-        'string' => ':attributeは:max文字以内で入力してください。',
-    ],
+丸ごとコピーしてから置き換えていく理由は、このファイルがそのまま対応表になるからです。英語のままの行はまだ訳していない部分、日本語になった行は置き換え済みの部分だと、開けばいつでも分かります。必要な行だけを書き足していく作り方だと、何が対応できていて何が残っているかが分かりません。
 
-    'attributes' => [
+項目名（`:attribute` に差し込まれる言葉）の日本語化は、翻訳ファイルではなく `TransactionRequest` に書きます。項目名はフォームごとに決まるものだからです。`rules()` の下に `attributes()` を追加します。
+
+```php
+public function attributes(): array
+{
+    return [
         'occurred_at' => '日付',
         'type' => '区分',
         'category_id' => 'カテゴリ',
         'amount' => '金額',
         'note' => 'メモ',
-    ],
-];
+    ];
+}
 ```
-
-書いているのは、今日のフォームで使っているルールのぶんだけです。末尾の `attributes` は項目名の対訳表です。これが無いと「amountは必ず入力してください。」のように、列名がそのまま差し込まれます。
 
 あとは、アプリの言語を `ja` に切り替えます。設定ファイル `config/app.php` を開いて、この行を探してください。
 
@@ -1009,11 +1008,11 @@ APP_LOCALE=ja
 
 !!! success "確認"
 
-    金額を空にして送信すると、「金額は必ず入力してください。」と表示されます。attributes の対訳（amount → 金額）まで効いていることを確認してください。
+    金額を空にして送信すると、「金額は必ず入力してください。」と表示されます。`required` の訳と、`attributes()` の項目名（amount → 金額）の両方が効いています。
 
 !!! note "補足：訳が無いルールはどうなるか"
 
-    `config/app.php` の `locale` の近くに `fallback_locale`（en）があります。訳が見つからないときに、代わりに使われる言語の設定です。`ja` に書いていないルールのメッセージは英語のまま表示されるだけで、壊れはしません。必要になったら訳を足します（「授業のあとに試すこと」の2番）。
+    まだ訳していない行のメッセージは、英語のまま表示されるだけで壊れはしません。授業のあとに、使う行から順に訳を進められます（「授業のあとに試すこと」の2番）。なお `config/app.php` の `locale` の近くにある `fallback_locale`（en）は、`ja` のファイルにキー自体が無いときに en 側から読むための設定です。
 
 !!! warning "つまずきポイント：英語のまま変わらない"
 
@@ -1620,6 +1619,6 @@ $transaction->delete();
     - 影響箇所を直します。`type_label` アクセサの `match` は enum に移したので、`get: fn () => $this->type->label()` に書き換えます。`edit.blade.php` の `@selected(old('type', $transaction->type) === 'expense')` は、enum と文字列の比較になってしまうので `old('type', $transaction->type->value) === 'expense'` に書き換えます。`'income'` の行も同じ形で直します（あわせて2箇所）。`value` は enum の元の文字列です。
     - バリデーションの `in:income,expense` はそのままで動きます。フォームから届くのは文字列だからです。[enumキャスト](https://readouble.com/laravel/13.x/ja/eloquent-mutators.html#enum-casting)
 
-2. **翻訳を増やす。** `TransactionRequest` にルールを1つ足してみてください（たとえば `note` に `min:2`）。エラーが英語で出ます。`lang/en/validation.php` から該当の行を探して `lang/ja/validation.php` に写し、日本語にすると直ります。fallback の動きと直し方が体験できます。
+2. **翻訳を進める。** `TransactionRequest` にルールを1つ足してみてください（たとえば `note` に `min:2`）。エラーが英語で出ます。`lang/ja/validation.php` の該当の行（`min` の `string`）を日本語に置き換えると直ります。
 
 3. **編集画面に削除ボタンを付ける。** 一覧と同じ削除フォームを `edit.blade.php` に足せば動きます。1つだけ注意があります。**フォームの中にフォームは置けません。**「更新する」のフォームの外（`</form>` の後）に置いてください。
