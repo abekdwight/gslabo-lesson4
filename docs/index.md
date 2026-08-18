@@ -26,7 +26,7 @@
 
 - **Docker Desktop** が動くこと。
 - **前回作った kakeibo プロジェクト**をそのまま使います。新しく作るものはありません。
-- **掲示板アプリの Sail を止めておいてください。** 同じポートを使うため、動いたままだと家計簿が起動できません。掲示板アプリのフォルダで次を実行します。
+- **ほかの Laravel プロジェクトの Sail が動いている場合は、止めておいてください。** 同じポートを使うため、動いたままだと家計簿が起動できません。そのプロジェクトのフォルダで次を実行します。
 
 ```sh
 ./vendor/bin/sail down
@@ -63,7 +63,7 @@ cd kakeibo
 
 !!! warning "つまずきポイント：起動できない"
 
-    - `port is already allocated` / `Address already in use`：掲示板アプリの Sail が動いたままです。掲示板アプリのフォルダで `./vendor/bin/sail down` してから、もう一度 `sail up -d` を実行してください。
+    - `port is already allocated` / `Address already in use`：ほかのプロジェクトの Sail が動いたままです。そのプロジェクトのフォルダで `./vendor/bin/sail down` してから、もう一度 `sail up -d` を実行してください。
     - 一覧がエラーになる：前回の最後に tinker からデータを消した場合など、取引が1件も無いだけならエラーにはなりません。エラー画面が出たときは、一番上の1文を読んでファイル名と行数を確認してください。
 
 ## 進め方
@@ -82,9 +82,9 @@ cd kakeibo
 
 ## ① 前回の続きを取り込む（編集と削除）
 
-掲示板アプリでは、投稿の編集と削除まで作りました。家計簿の編集・削除は**それとまったく同じ型**なので、説明は繰り返さず、コードを貼って動かすところから始めます。
+編集と削除は、前回作った登録・一覧と同じ道具（ルート・コントローラ・ビュー・バリデーション）の組み合わせでできています。新しく出てくる仕組みは、ルートモデルバインディングと `@method()` の2つだけです。コードを貼って動かしながら、その2つだけ説明します。
 
-ルートは前回 `Route::resource('transactions', ...)->except(['show'])` と宣言した時点で6本そろっているので、追記はありません。`route:list` で見た URL `transactions/{transaction}` の `{transaction}` には取引の ID が入り、コントローラは引数 `Transaction $transaction` で該当の1件を受け取ります。掲示板でやった**ルートモデルバインディング**です。
+ルートは前回 `Route::resource('transactions', ...)->except(['show'])` と宣言した時点で6本そろっているので、追記はありません。`route:list` で見た URL `transactions/{transaction}` の `{transaction}` には取引の ID が入り、コントローラは引数 `Transaction $transaction` で該当の1件を受け取ります。これが1つ目の新しい仕組み、**ルートモデルバインディング**です。URL に入った ID から、Laravel が該当の1件を取得して引数に渡してくれます。[ルートモデルバインディング](https://readouble.com/laravel/13.x/ja/routing.html#route-model-binding)
 
 まず、一覧に操作の列を足します。`resources/views/transactions/index.blade.php` を次の内容に差し替えます。変わるのは、見出し行の空の `<th></th>` と、各行の最後の `<td>` です。
 
@@ -124,7 +124,7 @@ cd kakeibo
 </x-layout>
 ```
 
-`@method('DELETE')` は掲示板でやった「HTML のフォームは GET と POST しか送れないので、本当のメソッドを隠しフィールドで伝える」書き方です。
+`@method('DELETE')` が2つ目の新しい仕組みです。HTML のフォームは GET と POST しか送れないので、本当に使いたいメソッドを隠しフィールドで伝えます。ルートの `DELETE transactions/{transaction}` は、POST フォームとこの1行の組で呼び出します。
 
 次に、編集画面です。`resources/views/transactions/edit.blade.php` を新規作成します。
 
@@ -354,7 +354,7 @@ public function update(TransactionRequest $request, Transaction $transaction)
 }
 ```
 
-掲示板からずっと `store(Request $request)` と書いてきました。その `Request` の場所に自作の `TransactionRequest` を置くと、Laravel は**コントローラのメソッドが始まる前に** `rules()` の検証を実行します。メソッドに到達した時点で検証は済んでいて、通った値だけを `validated()` で受け取ります。検証に失敗したときの動き（エラーと入力値を持ってフォームへ差し戻す）は、いままでと同じです。[フォームリクエスト](https://readouble.com/laravel/13.x/ja/validation.html#form-request-validation)
+前回から `store(Request $request)` と書いてきました。その `Request` の場所に自作の `TransactionRequest` を置くと、Laravel は**コントローラのメソッドが始まる前に** `rules()` の検証を実行します。メソッドに到達した時点で検証は済んでいて、通った値だけを `validated()` で受け取ります。検証に失敗したときの動き（エラーと入力値を持ってフォームへ差し戻す）は、いままでと同じです。[フォームリクエスト](https://readouble.com/laravel/13.x/ja/validation.html#form-request-validation)
 
 ```mermaid
 sequenceDiagram
@@ -602,7 +602,7 @@ $transactions = Transaction::with('category')->latest('occurred_at')->get();
 
 ## まとめ
 
-- 編集と削除が入り、家計簿の操作が一通りそろった。型は掲示板アプリと同じ。
+- 編集と削除が入り、家計簿の操作が一通りそろった。新しい仕組みはルートモデルバインディングと `@method()` の2つだけだった。
 - 操作の結果は**フラッシュメッセージ**で伝える。`->with()` で残して `session()` で読む、「次の1回だけ」のセッション。`@error` と `old()` も同じ仕組みの上に乗っている。
 - 検証ルールの置き場は **FormRequest**。コントローラは引数の型を差し替えるだけで、検証済みの値を `validated()` で受け取る。
 - エラーの文言は**翻訳ファイル**から来ている。`lang/ja/validation.php` を置き、`.env` の `APP_LOCALE` で切り替える。コードが読むのは config、環境ごとの値は `.env`。
