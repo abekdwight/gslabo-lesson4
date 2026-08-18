@@ -59,7 +59,10 @@ class TransactionController extends Controller
      */
     public function edit(Transaction $transaction)
     {
-        //
+        return view('transactions.edit', [
+            'transaction' => $transaction,
+            'categories' => Category::all(),
+        ]);
     }
 
     /**
@@ -67,7 +70,17 @@ class TransactionController extends Controller
      */
     public function update(Request $request, Transaction $transaction)
     {
-        //
+        $validated = $request->validate([
+            'occurred_at' => 'required|date',
+            'type' => 'required|in:income,expense',
+            'category_id' => 'required|exists:categories,id',
+            'amount' => 'required|integer|min:1',
+            'note' => 'nullable|string|max:255',
+        ]);
+
+        $transaction->update($validated);
+
+        return redirect('/transactions');
     }
 
     /**

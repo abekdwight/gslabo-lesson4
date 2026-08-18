@@ -123,14 +123,14 @@ DELETE     transactions/{transaction} ........ transactions.destroy
 
 ### 編集を作る
 
-一覧に操作の列を足します。`index.blade.php` の見出し行の末尾に空の `<th></th>` を、各行の末尾に編集リンクの `<td>` を追加します。
+一覧に操作の列を足します。`index.blade.php` の見出し行の末尾に `<th>操作</th>` を、各行の末尾に編集リンクの `<td>` を追加します。
 
 === "追加する部分"
 
     見出し行の `<th>メモ</th>` の下に1行足します。
 
     ```blade
-    <th></th>
+    <th>操作</th>
     ```
 
     各行の `<td>{{ $transaction->note }}</td>` の下に足します。
@@ -153,7 +153,7 @@ DELETE     transactions/{transaction} ........ transactions.destroy
                     <th>区分</th>
                     <th class="amount">金額</th>
                     <th>メモ</th>
-                    <th></th>
+                    <th>操作</th>
                 </tr>
             </thead>
             <tbody>
@@ -307,7 +307,7 @@ public function update(Request $request, Transaction $transaction)
                     <th>区分</th>
                     <th class="amount">金額</th>
                     <th>メモ</th>
-                    <th></th>
+                    <th>操作</th>
                 </tr>
             </thead>
             <tbody>
