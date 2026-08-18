@@ -123,13 +123,56 @@ DELETE     transactions/{transaction} ........ transactions.destroy
 
 ### 編集を作る
 
-一覧に操作の列を足します。`index.blade.php` の見出し行に空の `<th></th>` を1つ、各行の最後に次の `<td>` を追加します。
+一覧に操作の列を足します。`index.blade.php` の見出し行の末尾に空の `<th></th>` を、各行の末尾に編集リンクの `<td>` を追加します。
 
-```blade
-<td>
-    <a href="{{ route('transactions.edit', $transaction) }}">編集</a>
-</td>
-```
+=== "追加する部分"
+
+    見出し行の `<th>メモ</th>` の下に1行足します。
+
+    ```blade
+    <th></th>
+    ```
+
+    各行の `<td>{{ $transaction->note }}</td>` の下に足します。
+
+    ```blade
+    <td>
+        <a href="{{ route('transactions.edit', $transaction) }}">編集</a>
+    </td>
+    ```
+
+=== "index.blade.php 全文"
+
+    ```blade
+    <x-layout>
+        <table>
+            <thead>
+                <tr>
+                    <th>日付</th>
+                    <th>カテゴリ</th>
+                    <th>区分</th>
+                    <th class="amount">金額</th>
+                    <th>メモ</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($transactions as $transaction)
+                    <tr>
+                        <td>{{ $transaction->occurred_at }}</td>
+                        <td>{{ $transaction->category->name }}</td>
+                        <td>{{ $transaction->type === 'income' ? '収入' : '支出' }}</td>
+                        <td class="amount">¥{{ number_format($transaction->amount) }}</td>
+                        <td>{{ $transaction->note }}</td>
+                        <td>
+                            <a href="{{ route('transactions.edit', $transaction) }}">編集</a>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </x-layout>
+    ```
 
 編集画面を作ります。`resources/views/transactions/edit.blade.php` を新規作成します。中身は `create.blade.php` のコピーで、違いは3つです。
 
@@ -236,38 +279,21 @@ public function update(Request $request, Transaction $transaction)
 
 ### 削除を作る
 
-操作の列に、削除のフォームを足します。編集リンクの後ろに追加します。
+操作の列に、削除のフォームを足します。
 
-```blade
-<form method="POST" action="{{ route('transactions.destroy', $transaction) }}">
-    @csrf
-    @method('DELETE')
-    <button type="submit" onclick="return confirm('本当に削除しますか？')">削除</button>
-</form>
-```
+=== "追加する部分"
 
-`@method('DELETE')` で、今度は DELETE を伝えます。ボタンの `onclick` は、送信前にブラウザの確認ダイアログを出します。
+    操作の列の、編集リンクの下に足します。
 
-コントローラの `destroy` を書きます。
+    ```blade
+    <form method="POST" action="{{ route('transactions.destroy', $transaction) }}">
+        @csrf
+        @method('DELETE')
+        <button type="submit" onclick="return confirm('本当に削除しますか？')">削除</button>
+    </form>
+    ```
 
-```php
-public function destroy(Transaction $transaction)
-{
-    $transaction->delete();
-
-    return redirect('/transactions');
-}
-```
-
-!!! success "確認"
-
-    一覧から1件削除してみてください。確認ダイアログのあと、表から消えます。
-
-!!! warning "つまずきポイント：操作の列が縦に崩れる"
-
-    スタイルを付けている場合は、前回の `public/style.css` に操作列用のルール（`td form { display: inline; }` など）が含まれているか確認してください。
-
-??? note "ここまでの index.blade.php の全文（クリックで開く）"
+=== "index.blade.php 全文"
 
     ```blade
     <x-layout>
@@ -304,6 +330,27 @@ public function destroy(Transaction $transaction)
         </table>
     </x-layout>
     ```
+
+`@method('DELETE')` で、今度は DELETE を伝えます。ボタンの `onclick` は、送信前にブラウザの確認ダイアログを出します。
+
+コントローラの `destroy` を書きます。
+
+```php
+public function destroy(Transaction $transaction)
+{
+    $transaction->delete();
+
+    return redirect('/transactions');
+}
+```
+
+!!! success "確認"
+
+    一覧から1件削除してみてください。確認ダイアログのあと、表から消えます。
+
+!!! warning "つまずきポイント：操作の列が縦に崩れる"
+
+    スタイルを付けている場合は、前回の `public/style.css` に操作列用のルール（`td form { display: inline; }` など）が含まれているか確認してください。
 
 ## ② フラッシュメッセージで操作の結果を伝える
 
