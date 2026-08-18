@@ -368,8 +368,6 @@ DELETE     transactions/{transaction} ........ transactions.destroy
     }
     ```
 
-ここで `update` を見てください。`store` に書いたのと**同じ5行のルールが、もう1回**書いてあります。この重複は③で解決します。
-
 !!! success "確認"
 
     一覧の編集リンクから金額を変えて「更新する」を押すと、一覧に反映されます。
@@ -381,11 +379,27 @@ DELETE     transactions/{transaction} ........ transactions.destroy
 
 ### 削除を作る
 
-操作の列に、削除のフォームを足します。
+一覧から取引を1件削除できるようにします。ここは自分で組み立ててみてください。
 
-=== "追加する部分"
+!!! question "やってみましょう：削除を作る"
 
-    操作の列の、編集リンクの下に足します。
+    操作の列に、次のフォームを足します。（　）の2箇所を埋めてください。編集では `@method('PUT')` と書きました。削除で何を書くかは、①の最初に表示した `route:list` の結果が手掛かりになります。
+
+    ```blade
+    <form method="POST" action="（削除のURL）">
+        @csrf
+        （メソッドの指定）
+        <button type="submit" onclick="return confirm('本当に削除しますか？')">削除</button>
+    </form>
+    ```
+
+    コントローラの `destroy` は、生成された時点から中身が空のままです。ここに1件削除する処理と、一覧へのリダイレクトを書きます。削除は `$transaction->delete()` です。
+
+    確認：一覧から1件削除して、確認ダイアログのあと表から消えれば成功です。
+
+??? note "答え"
+
+    フォームはこうなります。
 
     ```blade
     <form method="POST" action="{{ route('transactions.destroy', $transaction) }}">
@@ -395,49 +409,9 @@ DELETE     transactions/{transaction} ........ transactions.destroy
     </form>
     ```
 
-=== "index.blade.php 全文"
+    `@method('DELETE')` の考え方は編集の `PUT` と同じです。HTML のフォームは GET と POST しか送れないので、本当に使いたいメソッドを隠しフィールドで伝えます。
 
-    ```blade
-    <x-layout>
-        <table>
-            <thead>
-                <tr>
-                    <th>日付</th>
-                    <th>カテゴリ</th>
-                    <th>区分</th>
-                    <th class="amount">金額</th>
-                    <th>メモ</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($transactions as $transaction)
-                    <tr>
-                        <td>{{ $transaction->occurred_at }}</td>
-                        <td>{{ $transaction->category->name }}</td>
-                        <td>{{ $transaction->type === 'income' ? '収入' : '支出' }}</td>
-                        <td class="amount">¥{{ number_format($transaction->amount) }}</td>
-                        <td>{{ $transaction->note }}</td>
-                        <td>
-                            <a href="{{ route('transactions.edit', $transaction) }}">編集</a>
-                            <form method="POST" action="{{ route('transactions.destroy', $transaction) }}">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" onclick="return confirm('本当に削除しますか？')">削除</button>
-                            </form>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </x-layout>
-    ```
-
-`@method('DELETE')` で、今度は DELETE を伝えます。ボタンの `onclick` は、送信前にブラウザの確認ダイアログを出します。
-
-コントローラの `destroy` を書きます。
-
-=== "書き換える部分"
+    コントローラの `destroy` はこうなります。
 
     ```php
     public function destroy(Transaction $transaction)
@@ -448,109 +422,143 @@ DELETE     transactions/{transaction} ........ transactions.destroy
     }
     ```
 
-=== "TransactionController.php 全文"
+    === "index.blade.php 全文"
 
-    ```php
-    <?php
+        ```blade
+        <x-layout>
+            <table>
+                <thead>
+                    <tr>
+                        <th>日付</th>
+                        <th>カテゴリ</th>
+                        <th>区分</th>
+                        <th class="amount">金額</th>
+                        <th>メモ</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($transactions as $transaction)
+                        <tr>
+                            <td>{{ $transaction->occurred_at }}</td>
+                            <td>{{ $transaction->category->name }}</td>
+                            <td>{{ $transaction->type === 'income' ? '収入' : '支出' }}</td>
+                            <td class="amount">¥{{ number_format($transaction->amount) }}</td>
+                            <td>{{ $transaction->note }}</td>
+                            <td>
+                                <a href="{{ route('transactions.edit', $transaction) }}">編集</a>
+                                <form method="POST" action="{{ route('transactions.destroy', $transaction) }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" onclick="return confirm('本当に削除しますか？')">削除</button>
+                                </form>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </x-layout>
+        ```
 
-    namespace App\Http\Controllers;
+    === "TransactionController.php 全文"
 
-    use App\Models\Category;
-    use App\Models\Transaction;
-    use Illuminate\Http\Request;
+        ```php
+        <?php
 
-    class TransactionController extends Controller
-    {
-        /**
-         * Display a listing of the resource.
-         */
-        public function index()
+        namespace App\Http\Controllers;
+
+        use App\Models\Category;
+        use App\Models\Transaction;
+        use Illuminate\Http\Request;
+
+        class TransactionController extends Controller
         {
-            $transactions = Transaction::with('category')->latest('occurred_at')->get();
+            /**
+             * Display a listing of the resource.
+             */
+            public function index()
+            {
+                $transactions = Transaction::with('category')->latest('occurred_at')->get();
 
-            return view('transactions.index', ['transactions' => $transactions]);
+                return view('transactions.index', ['transactions' => $transactions]);
+            }
+
+            /**
+             * Show the form for creating a new resource.
+             */
+            public function create()
+            {
+                return view('transactions.create', [
+                    'categories' => Category::all(),
+                ]);
+            }
+
+            /**
+             * Store a newly created resource in storage.
+             */
+            public function store(Request $request)
+            {
+                $validated = $request->validate([
+                    'occurred_at' => 'required|date',
+                    'type' => 'required|in:income,expense',
+                    'category_id' => 'required|exists:categories,id',
+                    'amount' => 'required|integer|min:1',
+                    'note' => 'nullable|string|max:255',
+                ]);
+
+                Transaction::create($validated);
+
+                return redirect('/transactions');
+            }
+
+            /**
+             * Display the specified resource.
+             */
+            public function show(Transaction $transaction)
+            {
+                //
+            }
+
+            /**
+             * Show the form for editing the specified resource.
+             */
+            public function edit(Transaction $transaction)
+            {
+                return view('transactions.edit', [
+                    'transaction' => $transaction,
+                    'categories' => Category::all(),
+                ]);
+            }
+
+            /**
+             * Update the specified resource in storage.
+             */
+            public function update(Request $request, Transaction $transaction)
+            {
+                $validated = $request->validate([
+                    'occurred_at' => 'required|date',
+                    'type' => 'required|in:income,expense',
+                    'category_id' => 'required|exists:categories,id',
+                    'amount' => 'required|integer|min:1',
+                    'note' => 'nullable|string|max:255',
+                ]);
+
+                $transaction->update($validated);
+
+                return redirect('/transactions');
+            }
+
+            /**
+             * Remove the specified resource from storage.
+             */
+            public function destroy(Transaction $transaction)
+            {
+                $transaction->delete();
+
+                return redirect('/transactions');
+            }
         }
-
-        /**
-         * Show the form for creating a new resource.
-         */
-        public function create()
-        {
-            return view('transactions.create', [
-                'categories' => Category::all(),
-            ]);
-        }
-
-        /**
-         * Store a newly created resource in storage.
-         */
-        public function store(Request $request)
-        {
-            $validated = $request->validate([
-                'occurred_at' => 'required|date',
-                'type' => 'required|in:income,expense',
-                'category_id' => 'required|exists:categories,id',
-                'amount' => 'required|integer|min:1',
-                'note' => 'nullable|string|max:255',
-            ]);
-
-            Transaction::create($validated);
-
-            return redirect('/transactions');
-        }
-
-        /**
-         * Display the specified resource.
-         */
-        public function show(Transaction $transaction)
-        {
-            //
-        }
-
-        /**
-         * Show the form for editing the specified resource.
-         */
-        public function edit(Transaction $transaction)
-        {
-            return view('transactions.edit', [
-                'transaction' => $transaction,
-                'categories' => Category::all(),
-            ]);
-        }
-
-        /**
-         * Update the specified resource in storage.
-         */
-        public function update(Request $request, Transaction $transaction)
-        {
-            $validated = $request->validate([
-                'occurred_at' => 'required|date',
-                'type' => 'required|in:income,expense',
-                'category_id' => 'required|exists:categories,id',
-                'amount' => 'required|integer|min:1',
-                'note' => 'nullable|string|max:255',
-            ]);
-
-            $transaction->update($validated);
-
-            return redirect('/transactions');
-        }
-
-        /**
-         * Remove the specified resource from storage.
-         */
-        public function destroy(Transaction $transaction)
-        {
-            $transaction->delete();
-
-            return redirect('/transactions');
-        }
-    }
-    ```
-
-!!! success "確認"
-
-    一覧から1件削除してみてください。確認ダイアログのあと、表から消えます。
+        ```
 
 !!! warning "つまずきポイント：操作の列が縦に崩れる"
 
