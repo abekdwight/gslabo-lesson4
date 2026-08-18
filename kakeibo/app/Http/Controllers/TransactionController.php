@@ -43,7 +43,7 @@ class TransactionController extends Controller
 
         Transaction::create($validated);
 
-        return redirect('/transactions');
+        return redirect('/transactions')->with('message', '登録しました');
     }
 
     /**
@@ -80,7 +80,7 @@ class TransactionController extends Controller
 
         $transaction->update($validated);
 
-        return redirect('/transactions');
+        return redirect('/transactions')->with('message', '更新しました');
     }
 
     /**
