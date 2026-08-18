@@ -743,7 +743,7 @@ DELETE     transactions/{transaction} ........ transactions.destroy
 セッションの中身を表示する **Session** タブは、初期設定では表示されません。パッケージの設定を変えるには、まず設定ファイルを自分のプロジェクトに取り出します。
 
 ```sh
-./vendor/bin/sail artisan vendor:publish --provider="Barryvdh\Debugbar\ServiceProvider"
+./vendor/bin/sail artisan vendor:publish --provider="Fruitcake\LaravelDebugbar\ServiceProvider"
 ```
 
 `config/debugbar.php` が生成されます。開いて `'collectors'` の中の `'session'` の行を探し、`false` を `true` に変えます。
