@@ -43,4 +43,4 @@ extra_css:
   - stylesheets/extra.css
 
 nav:
-  - "Laravel 2 — 家計簿を Laravel の流儀に乗せる": index.md
+  - "Laravel 2 — 家計簿を Laravel の仕組みで書き直す": index.md
