@@ -84,7 +84,32 @@ cd kakeibo
 
 編集と削除で書くのは、ルート・コントローラ・ビュー・バリデーションで、前回の登録・一覧と同じです。新しく出てくる仕組みは、ルートモデルバインディングと `@method()` の2つです。
 
-ルートは前回 `Route::resource('transactions', ...)->except(['show'])` と宣言した時点で6本そろっているので、追記はありません。`route:list` で見た URL `transactions/{transaction}` の `{transaction}` には取引の ID が入り、コントローラは引数 `Transaction $transaction` で該当の1件を受け取ります。これが1つ目の新しい仕組み、**ルートモデルバインディング**です。URL に入った ID から、Laravel が該当の1件を取得して引数に渡してくれます。[ルートモデルバインディング](https://readouble.com/laravel/13.x/ja/routing.html#route-model-binding)
+ルートは前回 `Route::resource('transactions', ...)->except(['show'])` と宣言した時点で6本そろっているので、追記はありません。編集と削除が使う URL の形を、`route:list` の結果で確認します。
+
+```
+GET|HEAD   transactions/{transaction}/edit ... transactions.edit
+PUT|PATCH  transactions/{transaction} ........ transactions.update
+DELETE     transactions/{transaction} ........ transactions.destroy
+```
+
+`{transaction}` の部分には、取引の ID が入ります。ID が 5 の取引なら、編集画面は `/transactions/5/edit`、更新は `/transactions/5` への PUT、削除は `/transactions/5` への DELETE です。
+
+コントローラ側では、メソッドの引数に `Transaction $transaction` と型を付けて宣言します。すると Laravel が、URL に入った ID で transactions テーブルを検索し、見つかった1件をモデルにして引数に渡してくれます。これが1つ目の新しい仕組み、**ルートモデルバインディング**です。`Transaction::find($id)` のような取得コードを自分で書く必要はなく、存在しない ID の URL を開いた場合は 404 ページが返ります。[ルートモデルバインディング](https://readouble.com/laravel/13.x/ja/routing.html#route-model-binding)
+
+!!! info "ポイント：「どの1件か」は URL の ID で指定する"
+
+    一覧や作成のように対象を選ばない操作は `/transactions` や `/transactions/create`、詳細・編集・更新・削除のように「どの1件か」を指定する操作は `/transactions/5` のように URL に ID を含めます。これが Laravel の基本の形です。`route:list` の6本も、この2種類に分かれています。
+
+!!! note "補足：ID 以外の値で検索させることもできる"
+
+    `{transaction}` の検索に使われる列は、既定では ID です。これは変更できます。たとえば記事のようなモデルで、URL を `/articles/5` ではなく `/articles/my-first-article` にしたい場合は、次のどちらかで「slug 列で検索する」と指定します。
+
+    | 書き方 | 書く場所 | 効果 |
+    | --- | --- | --- |
+    | `{article:slug}` とルートに書く | ルート | そのルートだけ slug 列で検索する |
+    | `getRouteKeyName()` で `'slug'` を返す | モデル | そのモデルは常に slug 列で検索する |
+
+    この家計簿は ID のまま進めます。
 
 まず、一覧に操作の列を足します。`resources/views/transactions/index.blade.php` を次の内容に差し替えます。変わるのは、見出し行の空の `<th></th>` と、各行の最後の `<td>` です。
 
