@@ -32,3 +32,13 @@
   border-radius: 4px;
   padding: 0.2rem 16px 12px;
 }
+
+/* 表は内容の量にかかわらず全幅にそろえる */
+.md-typeset__table {
+  display: block;
+}
+
+.md-typeset table:not([class]) {
+  display: table;
+  width: 100%;
+}
