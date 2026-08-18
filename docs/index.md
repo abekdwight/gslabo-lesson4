@@ -740,13 +740,23 @@ DELETE     transactions/{transaction} ........ transactions.destroy
 - **Queries**：このページを表示するために実行された SQL と、その回数・時間
 - **Request** / **Views**：リクエストの内容と、描画に使われたビュー
 
-セッションの中身を表示する **Session** タブは、初期設定では表示されません。Debugbar が集める情報は設定で切り替えられます。`.env` に1行足します。
+セッションの中身を表示する **Session** タブは、初期設定では表示されません。パッケージの設定を変えるには、まず設定ファイルを自分のプロジェクトに取り出します。
 
+```sh
+./vendor/bin/sail artisan vendor:publish --provider="Barryvdh\Debugbar\ServiceProvider"
 ```
-DEBUGBAR_COLLECTORS_SESSION=true
+
+`config/debugbar.php` が生成されます。開いて `'collectors'` の中の `'session'` の行を探し、`false` を `true` に変えます。
+
+```php
+'session'         => env('DEBUGBAR_COLLECTORS_SESSION', true),
 ```
 
 リロードすると **Session** タブが増えます。フラッシュメッセージの `message` も、バリデーションで差し戻されたときのエラーと入力値も、ここに入っています。
+
+!!! info "ポイント：パッケージの設定の変え方は共通"
+
+    Laravel のパッケージは、`composer require` しただけで既定の設定で動き、細かく変えたいときに `vendor:publish` で設定ファイルを `config/` に取り出して編集する、という形が共通です。
 
 !!! success "確認"
 
