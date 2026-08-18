@@ -88,6 +88,8 @@ class TransactionController extends Controller
      */
     public function destroy(Transaction $transaction)
     {
-        //
+        $transaction->delete();
+
+        return redirect('/transactions')->with('message', '削除しました');
     }
 }

@@ -10,6 +10,9 @@
     <nav>
         <a href="{{ route('transactions.index') }}">一覧</a>
         <a href="{{ route('transactions.create') }}">取引を追加</a>
+        @if (session('message'))
+            <p class="message">{{ session('message') }}</p>
+        @endif
     </nav>
 
     {{ $slot }}

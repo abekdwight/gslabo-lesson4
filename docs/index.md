@@ -243,30 +243,130 @@ DELETE     transactions/{transaction} ........ transactions.destroy
 
 コントローラの `edit` と `update` を書きます。`app/Http/Controllers/TransactionController.php` の空いている2メソッドに中身を書きます。
 
-```php
-public function edit(Transaction $transaction)
-{
-    return view('transactions.edit', [
-        'transaction' => $transaction,
-        'categories' => Category::all(),
-    ]);
-}
+=== "書き換える部分"
 
-public function update(Request $request, Transaction $transaction)
-{
-    $validated = $request->validate([
-        'occurred_at' => 'required|date',
-        'type' => 'required|in:income,expense',
-        'category_id' => 'required|exists:categories,id',
-        'amount' => 'required|integer|min:1',
-        'note' => 'nullable|string|max:255',
-    ]);
+    ```php
+    public function edit(Transaction $transaction)
+    {
+        return view('transactions.edit', [
+            'transaction' => $transaction,
+            'categories' => Category::all(),
+        ]);
+    }
 
-    $transaction->update($validated);
+    public function update(Request $request, Transaction $transaction)
+    {
+        $validated = $request->validate([
+            'occurred_at' => 'required|date',
+            'type' => 'required|in:income,expense',
+            'category_id' => 'required|exists:categories,id',
+            'amount' => 'required|integer|min:1',
+            'note' => 'nullable|string|max:255',
+        ]);
 
-    return redirect('/transactions');
-}
-```
+        $transaction->update($validated);
+
+        return redirect('/transactions');
+    }
+    ```
+
+=== "TransactionController.php 全文"
+
+    ```php
+    <?php
+
+    namespace App\Http\Controllers;
+
+    use App\Models\Category;
+    use App\Models\Transaction;
+    use Illuminate\Http\Request;
+
+    class TransactionController extends Controller
+    {
+        /**
+         * Display a listing of the resource.
+         */
+        public function index()
+        {
+            $transactions = Transaction::with('category')->latest('occurred_at')->get();
+
+            return view('transactions.index', ['transactions' => $transactions]);
+        }
+
+        /**
+         * Show the form for creating a new resource.
+         */
+        public function create()
+        {
+            return view('transactions.create', [
+                'categories' => Category::all(),
+            ]);
+        }
+
+        /**
+         * Store a newly created resource in storage.
+         */
+        public function store(Request $request)
+        {
+            $validated = $request->validate([
+                'occurred_at' => 'required|date',
+                'type' => 'required|in:income,expense',
+                'category_id' => 'required|exists:categories,id',
+                'amount' => 'required|integer|min:1',
+                'note' => 'nullable|string|max:255',
+            ]);
+
+            Transaction::create($validated);
+
+            return redirect('/transactions');
+        }
+
+        /**
+         * Display the specified resource.
+         */
+        public function show(Transaction $transaction)
+        {
+            //
+        }
+
+        /**
+         * Show the form for editing the specified resource.
+         */
+        public function edit(Transaction $transaction)
+        {
+            return view('transactions.edit', [
+                'transaction' => $transaction,
+                'categories' => Category::all(),
+            ]);
+        }
+
+        /**
+         * Update the specified resource in storage.
+         */
+        public function update(Request $request, Transaction $transaction)
+        {
+            $validated = $request->validate([
+                'occurred_at' => 'required|date',
+                'type' => 'required|in:income,expense',
+                'category_id' => 'required|exists:categories,id',
+                'amount' => 'required|integer|min:1',
+                'note' => 'nullable|string|max:255',
+            ]);
+
+            $transaction->update($validated);
+
+            return redirect('/transactions');
+        }
+
+        /**
+         * Remove the specified resource from storage.
+         */
+        public function destroy(Transaction $transaction)
+        {
+            //
+        }
+    }
+    ```
 
 ここで `update` を見てください。`store` に書いたのと**同じ5行のルールが、もう1回**書いてあります。この重複は③で解決します。
 
@@ -337,14 +437,116 @@ public function update(Request $request, Transaction $transaction)
 
 コントローラの `destroy` を書きます。
 
-```php
-public function destroy(Transaction $transaction)
-{
-    $transaction->delete();
+=== "書き換える部分"
 
-    return redirect('/transactions');
-}
-```
+    ```php
+    public function destroy(Transaction $transaction)
+    {
+        $transaction->delete();
+
+        return redirect('/transactions');
+    }
+    ```
+
+=== "TransactionController.php 全文"
+
+    ```php
+    <?php
+
+    namespace App\Http\Controllers;
+
+    use App\Models\Category;
+    use App\Models\Transaction;
+    use Illuminate\Http\Request;
+
+    class TransactionController extends Controller
+    {
+        /**
+         * Display a listing of the resource.
+         */
+        public function index()
+        {
+            $transactions = Transaction::with('category')->latest('occurred_at')->get();
+
+            return view('transactions.index', ['transactions' => $transactions]);
+        }
+
+        /**
+         * Show the form for creating a new resource.
+         */
+        public function create()
+        {
+            return view('transactions.create', [
+                'categories' => Category::all(),
+            ]);
+        }
+
+        /**
+         * Store a newly created resource in storage.
+         */
+        public function store(Request $request)
+        {
+            $validated = $request->validate([
+                'occurred_at' => 'required|date',
+                'type' => 'required|in:income,expense',
+                'category_id' => 'required|exists:categories,id',
+                'amount' => 'required|integer|min:1',
+                'note' => 'nullable|string|max:255',
+            ]);
+
+            Transaction::create($validated);
+
+            return redirect('/transactions');
+        }
+
+        /**
+         * Display the specified resource.
+         */
+        public function show(Transaction $transaction)
+        {
+            //
+        }
+
+        /**
+         * Show the form for editing the specified resource.
+         */
+        public function edit(Transaction $transaction)
+        {
+            return view('transactions.edit', [
+                'transaction' => $transaction,
+                'categories' => Category::all(),
+            ]);
+        }
+
+        /**
+         * Update the specified resource in storage.
+         */
+        public function update(Request $request, Transaction $transaction)
+        {
+            $validated = $request->validate([
+                'occurred_at' => 'required|date',
+                'type' => 'required|in:income,expense',
+                'category_id' => 'required|exists:categories,id',
+                'amount' => 'required|integer|min:1',
+                'note' => 'nullable|string|max:255',
+            ]);
+
+            $transaction->update($validated);
+
+            return redirect('/transactions');
+        }
+
+        /**
+         * Remove the specified resource from storage.
+         */
+        public function destroy(Transaction $transaction)
+        {
+            $transaction->delete();
+
+            return redirect('/transactions');
+        }
+    }
+    ```
 
 !!! success "確認"
 
@@ -360,36 +562,168 @@ public function destroy(Transaction $transaction)
 
 コントローラの3箇所の `return` を変えます。
 
-```php
-// store の末尾
-return redirect('/transactions')->with('message', '登録しました');
+=== "書き換える部分"
 
-// update の末尾
-return redirect('/transactions')->with('message', '更新しました');
+    ```php
+    // store の末尾
+    return redirect('/transactions')->with('message', '登録しました');
 
-// destroy の末尾
-return redirect('/transactions')->with('message', '削除しました');
-```
+    // update の末尾
+    return redirect('/transactions')->with('message', '更新しました');
+
+    // destroy の末尾
+    return redirect('/transactions')->with('message', '削除しました');
+    ```
+
+=== "TransactionController.php 全文"
+
+    ```php
+    <?php
+
+    namespace App\Http\Controllers;
+
+    use App\Models\Category;
+    use App\Models\Transaction;
+    use Illuminate\Http\Request;
+
+    class TransactionController extends Controller
+    {
+        /**
+         * Display a listing of the resource.
+         */
+        public function index()
+        {
+            $transactions = Transaction::with('category')->latest('occurred_at')->get();
+
+            return view('transactions.index', ['transactions' => $transactions]);
+        }
+
+        /**
+         * Show the form for creating a new resource.
+         */
+        public function create()
+        {
+            return view('transactions.create', [
+                'categories' => Category::all(),
+            ]);
+        }
+
+        /**
+         * Store a newly created resource in storage.
+         */
+        public function store(Request $request)
+        {
+            $validated = $request->validate([
+                'occurred_at' => 'required|date',
+                'type' => 'required|in:income,expense',
+                'category_id' => 'required|exists:categories,id',
+                'amount' => 'required|integer|min:1',
+                'note' => 'nullable|string|max:255',
+            ]);
+
+            Transaction::create($validated);
+
+            return redirect('/transactions')->with('message', '登録しました');
+        }
+
+        /**
+         * Display the specified resource.
+         */
+        public function show(Transaction $transaction)
+        {
+            //
+        }
+
+        /**
+         * Show the form for editing the specified resource.
+         */
+        public function edit(Transaction $transaction)
+        {
+            return view('transactions.edit', [
+                'transaction' => $transaction,
+                'categories' => Category::all(),
+            ]);
+        }
+
+        /**
+         * Update the specified resource in storage.
+         */
+        public function update(Request $request, Transaction $transaction)
+        {
+            $validated = $request->validate([
+                'occurred_at' => 'required|date',
+                'type' => 'required|in:income,expense',
+                'category_id' => 'required|exists:categories,id',
+                'amount' => 'required|integer|min:1',
+                'note' => 'nullable|string|max:255',
+            ]);
+
+            $transaction->update($validated);
+
+            return redirect('/transactions')->with('message', '更新しました');
+        }
+
+        /**
+         * Remove the specified resource from storage.
+         */
+        public function destroy(Transaction $transaction)
+        {
+            $transaction->delete();
+
+            return redirect('/transactions')->with('message', '削除しました');
+        }
+    }
+    ```
 
 `with('message', ...)` は、**セッション**に値を残します。セッションは、リクエストをまたいで値を保持する仕組みです。ここで残しているのは「次のリクエストまでだけ生きて、表示されたら消える」値で、この使い方を**フラッシュデータ**と呼びます。[フラッシュデータ](https://readouble.com/laravel/13.x/ja/session.html#flash-data)
 
 受け取る側は、共通レイアウトに置きます。どの画面に戻ってもメッセージを出せるようにするためです。`resources/views/components/layout.blade.php` の `</nav>` の次の行、`{{ $slot }}` の前に追加します。
 
-```blade
-@if (session('message'))
-    <p class="message">{{ session('message') }}</p>
-@endif
-```
+=== "追加する部分"
+
+    ```blade
+    @if (session('message'))
+        <p class="message">{{ session('message') }}</p>
+    @endif
+    ```
+
+=== "layout.blade.php 全文"
+
+    ```blade
+    <!doctype html>
+    <html lang="ja">
+    <head>
+        <meta charset="utf-8">
+        <title>家計簿</title>
+        <link rel="stylesheet" href="/style.css">
+    </head>
+    <body>
+        <h1>家計簿</h1>
+        <nav>
+            <a href="{{ route('transactions.index') }}">一覧</a>
+            <a href="{{ route('transactions.create') }}">取引を追加</a>
+        </nav>
+
+        @if (session('message'))
+            <p class="message">{{ session('message') }}</p>
+        @endif
+
+        {{ $slot }}
+    </body>
+    </html>
+    ```
 
 `session('message')` は、セッションから値を読むヘルパ関数です。値が無ければ何も表示しません。
 
 スタイルを付けている場合は、`public/style.css` に1ブロック足します。
 
 ```css
+/* フラッシュメッセージ */
 .message {
+  margin: 16px 0;
+  padding: 10px 14px;
   background: #e8f5e9;
-  border: 1px solid #a5d6a7;
-  padding: 8px 12px;
+  border-left: 4px solid #4caf50;
   border-radius: 4px;
 }
 ```
@@ -441,33 +775,121 @@ class TransactionRequest extends FormRequest
 }
 ```
 
-コントローラ側は、**引数の型を差し替えるだけ**です。ファイル先頭の `use` に1行足します。
+コントローラ側は、**引数の型を差し替えるだけ**です。ファイル先頭の `use` に `TransactionRequest` の1行を足し、もうどのメソッドも使わなくなる `use Illuminate\Http\Request;` を消します。そのうえで、`store` と `update` を次のようにします。
 
-```php
-use App\Http\Requests\TransactionRequest;
-```
+=== "書き換える部分"
 
-`store` と `update` を次のようにします。
+    ```php
+    use App\Http\Requests\TransactionRequest;
+    ```
 
-```php
-public function store(TransactionRequest $request)
-{
-    $validated = $request->validated();
+    ```php
+    public function store(TransactionRequest $request)
+    {
+        $validated = $request->validated();
 
-    Transaction::create($validated);
+        Transaction::create($validated);
 
-    return redirect('/transactions')->with('message', '登録しました');
-}
+        return redirect('/transactions')->with('message', '登録しました');
+    }
 
-public function update(TransactionRequest $request, Transaction $transaction)
-{
-    $validated = $request->validated();
+    public function update(TransactionRequest $request, Transaction $transaction)
+    {
+        $validated = $request->validated();
 
-    $transaction->update($validated);
+        $transaction->update($validated);
 
-    return redirect('/transactions')->with('message', '更新しました');
-}
-```
+        return redirect('/transactions')->with('message', '更新しました');
+    }
+    ```
+
+=== "TransactionController.php 全文"
+
+    ```php
+    <?php
+
+    namespace App\Http\Controllers;
+
+    use App\Http\Requests\TransactionRequest;
+    use App\Models\Category;
+    use App\Models\Transaction;
+
+    class TransactionController extends Controller
+    {
+        /**
+         * Display a listing of the resource.
+         */
+        public function index()
+        {
+            $transactions = Transaction::with('category')->latest('occurred_at')->get();
+
+            return view('transactions.index', ['transactions' => $transactions]);
+        }
+
+        /**
+         * Show the form for creating a new resource.
+         */
+        public function create()
+        {
+            return view('transactions.create', [
+                'categories' => Category::all(),
+            ]);
+        }
+
+        /**
+         * Store a newly created resource in storage.
+         */
+        public function store(TransactionRequest $request)
+        {
+            $validated = $request->validated();
+
+            Transaction::create($validated);
+
+            return redirect('/transactions')->with('message', '登録しました');
+        }
+
+        /**
+         * Display the specified resource.
+         */
+        public function show(Transaction $transaction)
+        {
+            //
+        }
+
+        /**
+         * Show the form for editing the specified resource.
+         */
+        public function edit(Transaction $transaction)
+        {
+            return view('transactions.edit', [
+                'transaction' => $transaction,
+                'categories' => Category::all(),
+            ]);
+        }
+
+        /**
+         * Update the specified resource in storage.
+         */
+        public function update(TransactionRequest $request, Transaction $transaction)
+        {
+            $validated = $request->validated();
+
+            $transaction->update($validated);
+
+            return redirect('/transactions')->with('message', '更新しました');
+        }
+
+        /**
+         * Remove the specified resource from storage.
+         */
+        public function destroy(Transaction $transaction)
+        {
+            $transaction->delete();
+
+            return redirect('/transactions')->with('message', '削除しました');
+        }
+    }
+    ```
 
 `$request->validate([...])` の行が消えて、短くなりました。前回から `store(Request $request)` と書いてきました。その `Request` の場所に自作の `TransactionRequest` を置くと、Laravel は**コントローラのメソッドが始まる前に** `rules()` の検証を実行します。メソッドに到達した時点で検証は済んでいて、通った値だけを `validated()` で受け取ります。検証に失敗したときの動き（エラーと入力値を持ってフォームへ差し戻す）は、いままでと同じです。[フォームリクエスト](https://readouble.com/laravel/13.x/ja/validation.html#form-request-validation)
 
@@ -486,8 +908,6 @@ sequenceDiagram
         リクエスト->>ブラウザ: フォームへ差し戻し（エラーと入力値はセッションで運ぶ）
     end
 ```
-
-なお、コントローラ先頭の `use Illuminate\Http\Request;` はもうどのメソッドも使っていないので、消して構いません。
 
 !!! success "確認"
 
@@ -589,13 +1009,39 @@ Transaction::first()->occurred_at;
 = "2026-08-01"
 ```
 
-文字列です。前回マイグレーションで `$table->date('occurred_at')` と型を指定しましたが、あれは**データベース側の型**です。DATE 型として保存され、SQL の中では日付として比較・整列されますが、PHP がその値を受け取るときは文字列になります。届いた値を **PHP 側でどの型として持つか**は別の設定で、それが `$casts` です。`app/Models/Transaction.php` に追加します。
+文字列です。前回マイグレーションで `$table->date('occurred_at')` と型を指定しましたが、あれは**データベース側の型**です。DATE 型として保存され、SQL の中では日付として比較・整列されますが、PHP がその値を受け取るときは文字列になります。届いた値を **PHP 側でどの型として持つか**は別の設定で、それが `$casts` です。`app/Models/Transaction.php` の `$fillable` の下に追加します。
 
-```php
+=== "追加する部分"
+
+    ```php
     protected $casts = [
         'occurred_at' => 'immutable_date',
     ];
-```
+    ```
+
+=== "Transaction.php 全文"
+
+    ```php
+    <?php
+
+    namespace App\Models;
+
+    use Illuminate\Database\Eloquent\Model;
+
+    class Transaction extends Model
+    {
+        protected $fillable = ['category_id', 'type', 'amount', 'occurred_at', 'note'];
+
+        protected $casts = [
+            'occurred_at' => 'immutable_date',
+        ];
+
+        public function category()
+        {
+            return $this->belongsTo(Category::class);
+        }
+    }
+    ```
 
 `'date'` と書くと Carbon という日付クラスに、`'immutable_date'` と書くとその不変版である CarbonImmutable になります。Carbon は `addDay()` などのメソッドが**自分自身を書き換える**ため、同じ変数を2回使うと日付がずれる事故が起きやすく、不変版を選んでおくと安全です。[属性のキャスト](https://readouble.com/laravel/13.x/ja/eloquent-mutators.html#attribute-casting)
 
@@ -617,15 +1063,116 @@ Transaction::first()->occurred_at;
 
 この時点でブラウザをリロードすると、一覧の日付が `2026-08-01 00:00:00` のように長くなっています。オブジェクトをそのまま表示しているためです。日付オブジェクトには `format()` が使えるので、一覧（`index.blade.php`）の日付のセルを変えます。
 
-```blade
-<td>{{ $transaction->occurred_at->format('n月j日') }}</td>
-```
+=== "書き換える部分"
+
+    ```blade
+    <td>{{ $transaction->occurred_at->format('n月j日') }}</td>
+    ```
+
+=== "index.blade.php 全文"
+
+    ```blade
+    <x-layout>
+        <table>
+            <thead>
+                <tr>
+                    <th>日付</th>
+                    <th>カテゴリ</th>
+                    <th>区分</th>
+                    <th class="amount">金額</th>
+                    <th>メモ</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($transactions as $transaction)
+                    <tr>
+                        <td>{{ $transaction->occurred_at->format('n月j日') }}</td>
+                        <td>{{ $transaction->category->name }}</td>
+                        <td>{{ $transaction->type === 'income' ? '収入' : '支出' }}</td>
+                        <td class="amount">¥{{ number_format($transaction->amount) }}</td>
+                        <td>{{ $transaction->note }}</td>
+                        <td>
+                            <a href="{{ route('transactions.edit', $transaction) }}">編集</a>
+                            <form method="POST" action="{{ route('transactions.destroy', $transaction) }}">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" onclick="return confirm('本当に削除しますか？')">削除</button>
+                            </form>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </x-layout>
+    ```
 
 もう1箇所あります。①で作った編集フォームの現在値です。`<input type="date">` が受け付けるのは `Y-m-d` 形式だけなので、`edit.blade.php` の日付の行も変えます。
 
-```blade
-<input type="date" name="occurred_at" value="{{ old('occurred_at', $transaction->occurred_at->format('Y-m-d')) }}">
-```
+=== "書き換える部分"
+
+    ```blade
+    <input type="date" name="occurred_at" value="{{ old('occurred_at', $transaction->occurred_at->format('Y-m-d')) }}">
+    ```
+
+=== "edit.blade.php 全文"
+
+    ```blade
+    <x-layout>
+        <h2>取引を編集</h2>
+
+        <form method="POST" action="{{ route('transactions.update', $transaction) }}">
+            @csrf
+            @method('PUT')
+
+            <p>
+                <label>日付
+                    <input type="date" name="occurred_at" value="{{ old('occurred_at', $transaction->occurred_at->format('Y-m-d')) }}">
+                </label>
+                @error('occurred_at') <span class="error">{{ $message }}</span> @enderror
+            </p>
+
+            <p>
+                <label>区分
+                    <select name="type">
+                        <option value="expense" @selected(old('type', $transaction->type) === 'expense')>支出</option>
+                        <option value="income" @selected(old('type', $transaction->type) === 'income')>収入</option>
+                    </select>
+                </label>
+                @error('type') <span class="error">{{ $message }}</span> @enderror
+            </p>
+
+            <p>
+                <label>カテゴリ
+                    <select name="category_id">
+                        @foreach ($categories as $category)
+                            <option value="{{ $category->id }}" @selected(old('category_id', $transaction->category_id) == $category->id)>
+                                {{ $category->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </label>
+                @error('category_id') <span class="error">{{ $message }}</span> @enderror
+            </p>
+
+            <p>
+                <label>金額（円）
+                    <input type="number" name="amount" value="{{ old('amount', $transaction->amount) }}">
+                </label>
+                @error('amount') <span class="error">{{ $message }}</span> @enderror
+            </p>
+
+            <p>
+                <label>メモ（任意）
+                    <input type="text" name="note" value="{{ old('note', $transaction->note) }}">
+                </label>
+                @error('note') <span class="error">{{ $message }}</span> @enderror
+            </p>
+
+            <p><button type="submit">更新する</button></p>
+        </form>
+    </x-layout>
+    ```
 
 !!! success "確認"
 
@@ -635,15 +1182,15 @@ Transaction::first()->occurred_at;
 
 一覧のビューには、⑤で整えた日付のほかにも、表示のための変換が2つ書いてあります。区分の `{{ $transaction->type === 'income' ? '収入' : '支出' }}` と、金額の `¥{{ number_format($transaction->amount) }}` です。動いてはいますが、この書き方では表示の変換がビューに増えていきます。この変換はモデル側に持たせられます。その仕組みが**アクセサ**です。
 
-`app/Models/Transaction.php` のファイル先頭の `use` に1行足します。
+`app/Models/Transaction.php` のファイル先頭の `use` に1行足し、クラスの中にメソッドを2つ追加します。
 
-```php
-use Illuminate\Database\Eloquent\Casts\Attribute;
-```
+=== "追加する部分"
 
-クラスの中にメソッドを2つ追加します。
+    ```php
+    use Illuminate\Database\Eloquent\Casts\Attribute;
+    ```
 
-```php
+    ```php
     protected function typeLabel(): Attribute
     {
         return Attribute::make(
@@ -660,7 +1207,49 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
             get: fn () => '¥' . number_format($this->amount),
         );
     }
-```
+    ```
+
+=== "Transaction.php 全文"
+
+    ```php
+    <?php
+
+    namespace App\Models;
+
+    use Illuminate\Database\Eloquent\Casts\Attribute;
+    use Illuminate\Database\Eloquent\Model;
+
+    class Transaction extends Model
+    {
+        protected $fillable = ['category_id', 'type', 'amount', 'occurred_at', 'note'];
+
+        protected $casts = [
+            'occurred_at' => 'immutable_date',
+        ];
+
+        public function category()
+        {
+            return $this->belongsTo(Category::class);
+        }
+
+        protected function typeLabel(): Attribute
+        {
+            return Attribute::make(
+                get: fn () => match ($this->type) {
+                    'income' => '収入',
+                    'expense' => '支出',
+                },
+            );
+        }
+
+        protected function amountLabel(): Attribute
+        {
+            return Attribute::make(
+                get: fn () => '¥' . number_format($this->amount),
+            );
+        }
+    }
+    ```
 
 読み方を3つ挙げます。
 
@@ -690,10 +1279,50 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 
 一覧の区分と金額のセルを置き換えます。
 
-```blade
-<td>{{ $transaction->type_label }}</td>
-<td class="amount">{{ $transaction->amount_label }}</td>
-```
+=== "書き換える部分"
+
+    ```blade
+    <td>{{ $transaction->type_label }}</td>
+    <td class="amount">{{ $transaction->amount_label }}</td>
+    ```
+
+=== "index.blade.php 全文"
+
+    ```blade
+    <x-layout>
+        <table>
+            <thead>
+                <tr>
+                    <th>日付</th>
+                    <th>カテゴリ</th>
+                    <th>区分</th>
+                    <th class="amount">金額</th>
+                    <th>メモ</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($transactions as $transaction)
+                    <tr>
+                        <td>{{ $transaction->occurred_at->format('n月j日') }}</td>
+                        <td>{{ $transaction->category->name }}</td>
+                        <td>{{ $transaction->type_label }}</td>
+                        <td class="amount">{{ $transaction->amount_label }}</td>
+                        <td>{{ $transaction->note }}</td>
+                        <td>
+                            <a href="{{ route('transactions.edit', $transaction) }}">編集</a>
+                            <form method="POST" action="{{ route('transactions.destroy', $transaction) }}">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" onclick="return confirm('本当に削除しますか？')">削除</button>
+                            </form>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </x-layout>
+    ```
 
 見た目は変わりません。「収入と支出をどう表示するか」を知っているのはモデルだけになり、ビューは受け取った属性を並べるだけになりました。
 
@@ -791,22 +1420,84 @@ Transaction::whereIn('category_id', [2, 3, 4])->sum('amount');
 
 50件を1ページに並べると長いので、10件ずつに区切ります。コントローラの `index` の `get()` を `paginate(10)` に変えます。
 
-```php
-$transactions = Transaction::with('category')->latest('occurred_at')->paginate(10);
-```
+=== "書き換える部分"
+
+    ```php
+    $transactions = Transaction::with('category')->latest('occurred_at')->paginate(10);
+    ```
+
+=== "index メソッド全文"
+
+    ```php
+    public function index()
+    {
+        $transactions = Transaction::with('category')->latest('occurred_at')->paginate(10);
+
+        return view('transactions.index', ['transactions' => $transactions]);
+    }
+    ```
 
 ビューは `@foreach` のまま動きます。ページを移動するリンクだけ、`index.blade.php` の `</table>` の後に足します。
 
-```blade
-<p>
-    @if ($transactions->previousPageUrl())
-        <a href="{{ $transactions->previousPageUrl() }}">前のページへ</a>
-    @endif
-    @if ($transactions->nextPageUrl())
-        <a href="{{ $transactions->nextPageUrl() }}">次のページへ</a>
-    @endif
-</p>
-```
+=== "追加する部分"
+
+    ```blade
+    <p>
+        @if ($transactions->previousPageUrl())
+            <a href="{{ $transactions->previousPageUrl() }}">前のページへ</a>
+        @endif
+        @if ($transactions->nextPageUrl())
+            <a href="{{ $transactions->nextPageUrl() }}">次のページへ</a>
+        @endif
+    </p>
+    ```
+
+=== "index.blade.php 全文"
+
+    ```blade
+    <x-layout>
+        <table>
+            <thead>
+                <tr>
+                    <th>日付</th>
+                    <th>カテゴリ</th>
+                    <th>区分</th>
+                    <th class="amount">金額</th>
+                    <th>メモ</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($transactions as $transaction)
+                    <tr>
+                        <td>{{ $transaction->occurred_at->format('n月j日') }}</td>
+                        <td>{{ $transaction->category->name }}</td>
+                        <td>{{ $transaction->type_label }}</td>
+                        <td class="amount">{{ $transaction->amount_label }}</td>
+                        <td>{{ $transaction->note }}</td>
+                        <td>
+                            <a href="{{ route('transactions.edit', $transaction) }}">編集</a>
+                            <form method="POST" action="{{ route('transactions.destroy', $transaction) }}">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" onclick="return confirm('本当に削除しますか？')">削除</button>
+                            </form>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+
+        <p>
+            @if ($transactions->previousPageUrl())
+                <a href="{{ $transactions->previousPageUrl() }}">前のページへ</a>
+            @endif
+            @if ($transactions->nextPageUrl())
+                <a href="{{ $transactions->nextPageUrl() }}">次のページへ</a>
+            @endif
+        </p>
+    </x-layout>
+    ```
 
 `paginate(10)` は、URL の `?page=2` のようなパラメータを見て、該当ページの10件だけを取得します。ページ番号の一覧をまとめて出力する `links()` というヘルパもあります。[ペジネーション](https://readouble.com/laravel/13.x/ja/pagination.html)
 
