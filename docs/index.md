@@ -111,47 +111,21 @@ DELETE     transactions/{transaction} ........ transactions.destroy
 
     この家計簿は ID のまま進めます。
 
-まず、一覧に操作の列を足します。`resources/views/transactions/index.blade.php` を次の内容に差し替えます。変わるのは、見出し行の空の `<th></th>` と、各行の最後の `<td>` です。
+### 編集を作る
+
+一覧に操作の列を足します。`index.blade.php` の見出し行に空の `<th></th>` を1つ、各行の最後に次の `<td>` を追加します。
 
 ```blade
-<x-layout>
-    <table>
-        <thead>
-            <tr>
-                <th>日付</th>
-                <th>カテゴリ</th>
-                <th>区分</th>
-                <th class="amount">金額</th>
-                <th>メモ</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($transactions as $transaction)
-                <tr>
-                    <td>{{ $transaction->occurred_at }}</td>
-                    <td>{{ $transaction->category->name }}</td>
-                    <td>{{ $transaction->type === 'income' ? '収入' : '支出' }}</td>
-                    <td class="amount">¥{{ number_format($transaction->amount) }}</td>
-                    <td>{{ $transaction->note }}</td>
-                    <td>
-                        <a href="{{ route('transactions.edit', $transaction) }}">編集</a>
-                        <form method="POST" action="{{ route('transactions.destroy', $transaction) }}">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" onclick="return confirm('本当に削除しますか？')">削除</button>
-                        </form>
-                    </td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-</x-layout>
+<td>
+    <a href="{{ route('transactions.edit', $transaction) }}">編集</a>
+</td>
 ```
 
-`@method('DELETE')` が2つ目の新しい仕組みです。HTML のフォームは GET と POST しか送れないので、本当に使いたいメソッドを隠しフィールドで伝えます。ルートの `DELETE transactions/{transaction}` は、POST フォームとこの1行の組で呼び出します。
+編集画面を作ります。`resources/views/transactions/edit.blade.php` を新規作成します。中身は `create.blade.php` のコピーで、違いは3つです。
 
-次に、編集画面です。`resources/views/transactions/edit.blade.php` を新規作成します。
+- `action` が `transactions.update` になり、`@method('PUT')` が入っている
+- 各 `old()` の第2引数に現在値が入っていて、開いた時点で入力済みになっている
+- ボタンの文言が「更新する」
 
 ```blade
 <x-layout>
@@ -210,13 +184,9 @@ DELETE     transactions/{transaction} ........ transactions.destroy
 </x-layout>
 ```
 
-追加フォームとの違いは3つだけです。
+`@method('PUT')` が2つ目の新しい仕組みです。HTML のフォームは GET と POST しか送れないので、本当に使いたいメソッドを隠しフィールドで伝えます。ルートの `PUT|PATCH transactions/{transaction}` は、POST フォームとこの1行の組で呼び出します。
 
-- `action` が `transactions.update` になり、`@method('PUT')` が入っている
-- 各 `old()` の第2引数に現在値が入っていて、開いた時点で入力済みになっている
-- ボタンの文言が「更新する」
-
-最後に、コントローラです。`app/Http/Controllers/TransactionController.php` の空いている3メソッドに中身を書きます。
+コントローラの `edit` と `update` を書きます。`app/Http/Controllers/TransactionController.php` の空いている2メソッドに中身を書きます。
 
 ```php
 public function edit(Transaction $transaction)
@@ -241,7 +211,36 @@ public function update(Request $request, Transaction $transaction)
 
     return redirect('/transactions');
 }
+```
 
+ここで `update` を見てください。`store` に書いたのと**同じ5行のルールが、もう1回**書いてあります。この重複は③で解決します。
+
+!!! success "確認"
+
+    一覧の編集リンクから金額を変えて「更新する」を押すと、一覧に反映されます。
+
+!!! warning "つまずきポイント：編集が動かない"
+
+    - `Undefined variable $categories`：`edit` メソッドでビューに `categories` を渡し忘れています。
+    - **419 Page Expired**：フォームの `@csrf` の書き忘れです。
+
+### 削除を作る
+
+操作の列に、削除のフォームを足します。編集リンクの後ろに追加します。
+
+```blade
+<form method="POST" action="{{ route('transactions.destroy', $transaction) }}">
+    @csrf
+    @method('DELETE')
+    <button type="submit" onclick="return confirm('本当に削除しますか？')">削除</button>
+</form>
+```
+
+`@method('DELETE')` で、今度は DELETE を伝えます。ボタンの `onclick` は、送信前にブラウザの確認ダイアログを出します。
+
+コントローラの `destroy` を書きます。
+
+```php
 public function destroy(Transaction $transaction)
 {
     $transaction->delete();
@@ -250,17 +249,51 @@ public function destroy(Transaction $transaction)
 }
 ```
 
-ここで `update` を見てください。`store` に書いたのと**同じ5行のルールが、もう1回**書いてあります。この重複は③で解決します。
-
 !!! success "確認"
 
-    一覧の編集リンクから金額を変えて「更新する」を押すと、一覧に反映されます。削除ボタンを押すと、確認ダイアログのあと、表から消えます。
+    一覧から1件削除してみてください。確認ダイアログのあと、表から消えます。
 
-!!! warning "つまずきポイント：編集・削除が動かない"
+!!! warning "つまずきポイント：操作の列が縦に崩れる"
 
-    - `Undefined variable $categories`：`edit` メソッドでビューに `categories` を渡し忘れています。
-    - 操作列の表示が縦に崩れる：スタイルを付けている場合は、前回の `public/style.css` に操作列用のルール（`td form { display: inline; }` など）が含まれているか確認してください。
-    - **419 Page Expired**：フォームの `@csrf` の書き忘れです。
+    スタイルを付けている場合は、前回の `public/style.css` に操作列用のルール（`td form { display: inline; }` など）が含まれているか確認してください。
+
+??? note "ここまでの index.blade.php の全文（クリックで開く）"
+
+    ```blade
+    <x-layout>
+        <table>
+            <thead>
+                <tr>
+                    <th>日付</th>
+                    <th>カテゴリ</th>
+                    <th>区分</th>
+                    <th class="amount">金額</th>
+                    <th>メモ</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($transactions as $transaction)
+                    <tr>
+                        <td>{{ $transaction->occurred_at }}</td>
+                        <td>{{ $transaction->category->name }}</td>
+                        <td>{{ $transaction->type === 'income' ? '収入' : '支出' }}</td>
+                        <td class="amount">¥{{ number_format($transaction->amount) }}</td>
+                        <td>{{ $transaction->note }}</td>
+                        <td>
+                            <a href="{{ route('transactions.edit', $transaction) }}">編集</a>
+                            <form method="POST" action="{{ route('transactions.destroy', $transaction) }}">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" onclick="return confirm('本当に削除しますか？')">削除</button>
+                            </form>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </x-layout>
+    ```
 
 ## ② フラッシュメッセージで操作の結果を伝える
 
