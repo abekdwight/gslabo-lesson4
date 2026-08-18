@@ -101,15 +101,13 @@ PUT|PATCH  transactions/{transaction} ........ transactions.update
 DELETE     transactions/{transaction} ........ transactions.destroy
 ```
 
-`{transaction}` の部分には、取引の ID が入ります。
+`{transaction}` の部分には、取引の ID が入ります。ID が 5 の取引なら、以下のようになります。
 
-ID が 5 の取引なら、
-
-| 種類     | ルート                     |
-| -------- | -------------------------- |
-| 編集画面 | `GET /transactions/5/edit` |
-| 更新     | `PUT /transactions/5`      |
-| 削除     | `DELETE /transactions/5`   |
+| 種類     | メソッド | ルート                            | 実際の URL             |
+| -------- | -------- | --------------------------------- | ---------------------- |
+| 編集画面 | GET      | `transactions/{transaction}/edit` | `/transactions/5/edit` |
+| 更新     | PUT      | `transactions/{transaction}`      | `/transactions/5`      |
+| 削除     | DELETE   | `transactions/{transaction}`      | `/transactions/5`      |
 
 コントローラ側では、メソッドの引数を `Transaction $transaction` と宣言します。**URL のセグメント名 `{transaction}` と引数の変数名 `$transaction` が同じ名前で、型が Eloquent モデルであるとき**、Laravel は URL に入った ID で transactions テーブルを検索し、見つかった1件をモデルにして引数に渡します。これが1つ目の新しい仕組み、**ルートモデルバインディング**です。`Transaction::find($id)` のような取得コードを自分で書く必要はなく、存在しない ID の URL を開いた場合は 404 ページが返ります。名前の一致が条件なので、引数名を `$item` のように変えると渡されなくなります。[ルートモデルバインディング](https://readouble.com/laravel/13.x/ja/routing.html#route-model-binding)
 
