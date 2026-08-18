@@ -109,7 +109,25 @@ DELETE     transactions/{transaction} ........ transactions.destroy
 | 更新     | PUT      | `transactions/{transaction}`      | `/transactions/5`      |
 | 削除     | DELETE   | `transactions/{transaction}`      | `/transactions/5`      |
 
-コントローラ側では、メソッドの引数を `Transaction $transaction` と宣言します。**URL のセグメント名 `{transaction}` と引数の変数名 `$transaction` が同じ名前で、型が Eloquent モデルであるとき**、Laravel は URL に入った ID で transactions テーブルを検索し、見つかった1件をモデルにして引数に渡します。これが1つ目の新しい仕組み、**ルートモデルバインディング**です。`Transaction::find($id)` のような取得コードを自分で書く必要はなく、存在しない ID の URL を開いた場合は 404 ページが返ります。名前の一致が条件なので、引数名を `$item` のように変えると渡されなくなります。[ルートモデルバインディング](https://readouble.com/laravel/13.x/ja/routing.html#route-model-binding)
+コントローラ側では、メソッドの引数を以下のように宣言します。
+
+```php
+public function edit(Transaction $transaction) {}
+public function update(Transaction $transaction, Request $request) {}
+public function destroy(Transaction $transaction) {}
+```
+
+-  URL のセグメント名 `{transaction}`
+-  引数の変数名 `$transaction` かつ、型が Eloquent モデル
+
+この条件に一致する場合に、LaravelはモデルとURLを自動的に紐付ける仕組みになっています。
+
+これが、**ルートモデルバインディング**です。
+
+`Transaction::find($id)` のような取得コードを自分で書く必要はなく、存在しない ID の URL を開いた場合は 404 ページが返ります。
+名前の一致が条件なので、引数名を `$item` のように変えると渡されなくなります。
+
+[ルートモデルバインディング](https://readouble.com/laravel/13.x/ja/routing.html#route-model-binding)
 
 !!! info "ポイント：「どの1件か」は URL の ID で指定する"
 
@@ -1034,7 +1052,7 @@ APP_LOCALE=ja
 
 !!! note "補足：訳が無いルールはどうなるか"
 
-    まだ訳していない行のメッセージは、英語のまま表示されるだけで壊れはしません。授業のあとに、使う行から順に訳を進められます（「授業のあとに試すこと」の2番）。なお `config/app.php` の `locale` の近くにある `fallback_locale`（en）は、`ja` のファイルにキー自体が無いときに en 側から読むための設定です。
+    まだ訳していない行のメッセージは、英語のまま表示されるだけで壊れはしません。授業のあとに、使う行から順に訳を進められます。なお `config/app.php` の `locale` の近くにある `fallback_locale`（en）は、`ja` のファイルにキー自体が無いときに en 側から読むための設定です。
 
 !!! warning "つまずきポイント：英語のまま変わらない"
 
@@ -1388,7 +1406,7 @@ Transaction::first()->occurred_at;
 
 見た目は変わりません。「収入と支出をどう表示するか」を知っているのはモデルだけになり、ビューは受け取った属性を並べるだけになりました。
 
-なお、`'income'` / `'expense'` のような決まった値の集合には **enum**（列挙型）という仕組みがあり、値とラベルを enum 側で管理するとさらに整理できます。「授業のあとに試すこと」の1番に実装手順を載せています。
+なお、`'income'` / `'expense'` のような決まった値の集合には **enum**（列挙型）という仕組みがあり、値とラベルを enum 側で管理するとさらに整理できます。[enumキャスト](https://readouble.com/laravel/13.x/ja/eloquent-mutators.html#enum-casting)
 
 ### データを増やして、クエリメソッドを試す
 
@@ -1581,48 +1599,3 @@ Category::firstOrCreate(['name' => '食費']);
 ```php
 $transaction->delete();
 ```
-
-## 授業のあとに試すこと
-
-1. **区分を enum にする。** 「時間が余ったら」のアクセサの節に名前だけ出た enum を、実際に導入してみます。
-    - `app/Enums/TransactionType.php` を（Enums フォルダごと）新規作成します。
-
-        ```php
-        <?php
-
-        namespace App\Enums;
-
-        enum TransactionType: string
-        {
-            case Income = 'income';
-            case Expense = 'expense';
-
-            public function label(): string
-            {
-                return match ($this) {
-                    TransactionType::Income => '収入',
-                    TransactionType::Expense => '支出',
-                };
-            }
-        }
-        ```
-
-        enum は「取りうる値をこの2つに限定した型」を作る PHP の構文です。値ごとの処理（ラベル）も enum 自身に持たせられます。
-
-    - `Transaction` モデルの `$casts` に1行足します（`use App\Enums\TransactionType;` も忘れずに）。
-
-        ```php
-        protected $casts = [
-            'occurred_at' => 'immutable_date',
-            'type' => TransactionType::class,
-        ];
-        ```
-
-        これで `$transaction->type` は文字列ではなく enum になります。tinker で `Transaction::first()->type` を見てみてください。
-
-    - 影響箇所を直します。`type_label` アクセサの `match` は enum に移したので、`get: fn () => $this->type->label()` に書き換えます。`edit.blade.php` の `@selected(old('type', $transaction->type) === 'expense')` は、enum と文字列の比較になってしまうので `old('type', $transaction->type->value) === 'expense'` に書き換えます。`'income'` の行も同じ形で直します（あわせて2箇所）。`value` は enum の元の文字列です。
-    - バリデーションの `in:income,expense` はそのままで動きます。フォームから届くのは文字列だからです。[enumキャスト](https://readouble.com/laravel/13.x/ja/eloquent-mutators.html#enum-casting)
-
-2. **翻訳を進める。** `TransactionRequest` にルールを1つ足してみてください（たとえば `note` に `min:2`）。エラーが英語で出ます。`lang/ja/validation.php` の該当の行（`min` の `string`）を日本語に置き換えると直ります。
-
-3. **編集画面に削除ボタンを付ける。** 一覧と同じ削除フォームを `edit.blade.php` に足せば動きます。1つだけ注意があります。**フォームの中にフォームは置けません。**「更新する」のフォームの外（`</form>` の後）に置いてください。
