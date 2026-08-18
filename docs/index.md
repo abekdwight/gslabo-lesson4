@@ -174,11 +174,7 @@ DELETE     transactions/{transaction} ........ transactions.destroy
     </x-layout>
     ```
 
-編集画面を作ります。`resources/views/transactions/edit.blade.php` を新規作成します。中身は `create.blade.php` のコピーで、違いは3つです。
-
-- `action` が `transactions.update` になり、`@method('PUT')` が入っている
-- 各 `old()` の第2引数に現在値が入っていて、開いた時点で入力済みになっている
-- ボタンの文言が「更新する」
+編集画面を作ります。`resources/views/transactions/edit.blade.php` を新規作成します。
 
 ```blade
 <x-layout>
@@ -236,6 +232,12 @@ DELETE     transactions/{transaction} ........ transactions.destroy
     </form>
 </x-layout>
 ```
+
+中身は `create.blade.php` のコピーで、違いは3つです。
+
+- `action` が `transactions.update` になり、`@method('PUT')` が入っている
+- 各 `old()` の第2引数に現在値が入っていて、開いた時点で入力済みになっている
+- ボタンの文言が「更新する」
 
 `@method('PUT')` が2つ目の新しい仕組みです。HTML のフォームは GET と POST しか送れないので、本当に使いたいメソッドを隠しフィールドで伝えます。ルートの `PUT|PATCH transactions/{transaction}` は、POST フォームとこの1行の組で呼び出します。
 
@@ -445,7 +447,7 @@ class TransactionRequest extends FormRequest
 use App\Http\Requests\TransactionRequest;
 ```
 
-`store` と `update` を次のようにします。`$request->validate([...])` の行が消えて、短くなります。
+`store` と `update` を次のようにします。
 
 ```php
 public function store(TransactionRequest $request)
@@ -467,7 +469,7 @@ public function update(TransactionRequest $request, Transaction $transaction)
 }
 ```
 
-前回から `store(Request $request)` と書いてきました。その `Request` の場所に自作の `TransactionRequest` を置くと、Laravel は**コントローラのメソッドが始まる前に** `rules()` の検証を実行します。メソッドに到達した時点で検証は済んでいて、通った値だけを `validated()` で受け取ります。検証に失敗したときの動き（エラーと入力値を持ってフォームへ差し戻す）は、いままでと同じです。[フォームリクエスト](https://readouble.com/laravel/13.x/ja/validation.html#form-request-validation)
+`$request->validate([...])` の行が消えて、短くなりました。前回から `store(Request $request)` と書いてきました。その `Request` の場所に自作の `TransactionRequest` を置くと、Laravel は**コントローラのメソッドが始まる前に** `rules()` の検証を実行します。メソッドに到達した時点で検証は済んでいて、通った値だけを `validated()` で受け取ります。検証に失敗したときの動き（エラーと入力値を持ってフォームへ差し戻す）は、いままでと同じです。[フォームリクエスト](https://readouble.com/laravel/13.x/ja/validation.html#form-request-validation)
 
 ```mermaid
 sequenceDiagram
@@ -511,7 +513,7 @@ sequenceDiagram
 'required' => 'The :attribute field is required.',
 ```
 
-`:attribute` の部分には、項目名が差し込まれます。ということは、**同じ形の日本語ファイルを `ja` として置けば、文言を丸ごと差し替えられます**。`lang/ja/validation.php` を新規作成します。全ルールを訳す必要はありません。今日のフォームで使っているルールのぶんだけ書きます。
+`:attribute` の部分には、項目名が差し込まれます。ということは、**同じ形の日本語ファイルを `ja` として置けば、文言を丸ごと差し替えられます**。`lang/ja/validation.php` を新規作成します。
 
 ```php
 <?php
@@ -540,7 +542,7 @@ return [
 ];
 ```
 
-末尾の `attributes` は項目名の対訳表です。これが無いと「amountは必ず入力してください。」のように、列名がそのまま差し込まれます。
+書いているのは、今日のフォームで使っているルールのぶんだけです。末尾の `attributes` は項目名の対訳表です。これが無いと「amountは必ず入力してください。」のように、列名がそのまま差し込まれます。
 
 あとは、アプリの言語を `ja` に切り替えます。設定ファイル `config/app.php` を開いて、この行を探してください。
 

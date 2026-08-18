@@ -7,6 +7,7 @@
                 <th>区分</th>
                 <th class="amount">金額</th>
                 <th>メモ</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
