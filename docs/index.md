@@ -735,13 +735,18 @@ DELETE     transactions/{transaction} ........ transactions.destroy
 ./vendor/bin/sail composer require barryvdh/laravel-debugbar --dev
 ```
 
-`--dev` は「開発環境だけで使うパッケージ」という指定です。インストールが終わったら、一覧をリロードしてください。画面の下にバーが現れます。
+`--dev` は「開発環境だけで使うパッケージ」という指定です。インストールが終わったら、一覧をリロードしてください。画面の下にバーが現れ、**Request**・**Timeline**・**Views**・**Queries**・**Models** などのタブが並びます。
 
-バーのタブには、いまのリクエストの情報が並びます。
-
-- **Session**：セッションの中身。フラッシュメッセージの `message` も、バリデーションで差し戻されたときのエラーと入力値も、ここに入ります
 - **Queries**：このページを表示するために実行された SQL と、その回数・時間
 - **Request** / **Views**：リクエストの内容と、描画に使われたビュー
+
+セッションの中身を表示する **Session** タブは、初期設定では表示されません。Debugbar が集める情報は設定で切り替えられます。`.env` に1行足します。
+
+```
+DEBUGBAR_COLLECTORS_SESSION=true
+```
+
+リロードすると **Session** タブが増えます。フラッシュメッセージの `message` も、バリデーションで差し戻されたときのエラーと入力値も、ここに入っています。
 
 !!! success "確認"
 
